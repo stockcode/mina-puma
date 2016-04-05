@@ -10,9 +10,12 @@ namespace :puma do
   set_default :puma_socket,    -> { "#{deploy_to}/#{shared_path}/tmp/sockets/puma.sock" }
   set_default :puma_state,     -> { "#{deploy_to}/#{shared_path}/tmp/sockets/puma.state" }
   set_default :puma_pid,       -> { "#{deploy_to}/#{shared_path}/tmp/pids/puma.pid" }
+  set_default :puma_port,      -> { nil }
   set_default :puma_cmd,       -> { "#{bundle_prefix} puma" }
   set_default :pumactl_cmd,    -> { "#{bundle_prefix} pumactl" }
   set_default :pumactl_socket, -> { "#{deploy_to}/#{shared_path}/tmp/sockets/pumactl.sock" }
+
+  set :puma_port_option, '-p'.concat(' ').concat(puma_port.to_s) if puma_port
 
   desc 'Start puma'
   task :start => :environment do
@@ -23,7 +26,7 @@ namespace :puma do
         if [ -e '#{puma_config}' ]; then
           cd #{deploy_to}/#{current_path} && #{puma_cmd} -q -d -e #{puma_env} -C #{puma_config}
         else
-          cd #{deploy_to}/#{current_path} && #{puma_cmd} -q -d -e #{puma_env} -b 'unix://#{puma_socket}' -S #{puma_state} --pidfile #{puma_pid} --control 'unix://#{pumactl_socket}'
+          cd #{deploy_to}/#{current_path} && #{puma_cmd} -q -d -e #{puma_env} -b 'unix://#{puma_socket}' #{puma_port_option} -S #{puma_state} --pidfile #{puma_pid} --control 'unix://#{pumactl_socket}'
         fi
       fi
     ]
